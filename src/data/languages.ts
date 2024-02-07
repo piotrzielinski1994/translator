@@ -19,9 +19,5 @@ export const languages = [
 	'de-DE',
 	'sk-SK',
 	'zh-CN',
-	'pl-PL',
-	'es-ES',
-	'hu-HU',
-	'nl-NL',
-	'ja-JP'
+	'pl-PL'
 ];

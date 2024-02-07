@@ -1,20 +1,33 @@
-<script type="ts">
+<script lang="ts">
 	let fileToDownload: Blob | null = null;
+	let isLoading = false;
+	let errorMessage = '';
 
 	async function handleSubmit(event) {
 		event.preventDefault();
-		const formData = new FormData(event.target);
-		const response = await fetch('/api/translations', {
-			method: 'POST',
-			body: formData
-		});
+		isLoading = true;
+		errorMessage = '';
 
-		if (!response.ok) {
-			console.error('File upload failed:', await response.text());
-			return;
+		const formData = new FormData();
+		formData.append('file', event.target.files[0]);
+
+		try {
+			const response = await fetch('/api/translations', {
+				method: 'POST',
+				body: formData
+			});
+
+			if (!response.ok) {
+				const data = await response.json();
+				throw Error(data.error);
+			}
+
+			fileToDownload = await response.blob();
+		} catch (error: any) {
+			errorMessage = error.message ?? 'Something went wrong.';
 		}
 
-		fileToDownload = await response.blob();
+		isLoading = false;
 	}
 
 	const downloadFile = () => {
@@ -25,7 +38,7 @@
 		const a = document.createElement('a');
 		a.style.display = 'none';
 		a.href = downloadUrl;
-		a.download = 'downloaded_file.csv';
+		a.download = 'translations.csv';
 		document.body.appendChild(a);
 
 		a.click();
@@ -37,10 +50,29 @@
 	};
 </script>
 
-<form on:submit|preventDefault={handleSubmit}>
-	<input type="file" name="file" accept=".csv" required />
-	<button type="submit">Submit</button>
-</form>
-{#if fileToDownload}
-	<button type="button" on:click|preventDefault={downloadFile}>DOWNLOAD</button>
-{/if}
+<div class="wrapper">
+	<input type="file" name="file" accept=".csv" required on:change|preventDefault={handleSubmit} />
+
+	{#if isLoading}
+		<p>Loading... It can take around minute, depending on the input.</p>
+	{:else if errorMessage}
+		<p class="error">{errorMessage}</p>
+	{:else if fileToDownload}
+		<button type="button" on:click|preventDefault={downloadFile}>DOWNLOAD</button>
+	{/if}
+</div>
+
+<style>
+	p {
+		margin: 0;
+	}
+
+	.wrapper {
+		display: grid;
+		place-items: center;
+	}
+
+	.error {
+		color: red;
+	}
+</style>
