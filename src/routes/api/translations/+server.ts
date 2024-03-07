@@ -1,13 +1,14 @@
 import { OpenAi } from '$lib/openai.service';
 import { CsvValidator } from '$lib/validator.service';
 import type { RequestHandler } from '@sveltejs/kit';
+import { csvMimeTypes } from '../../../data/csvMimeTypes';
 
 export const POST: RequestHandler = async ({ request }) => {
 	const formData = await request.formData();
 	const file = formData.get('file') as File;
 
 	if (!file) return takeErrorResponse('File not found.');
-	if (file.type !== 'text/csv') return takeErrorResponse('File not type of CSV.');
+	if (!csvMimeTypes.includes(file.type)) return takeErrorResponse('File not type of CSV.');
 
 	const baseTranslations = await file.text();
 
